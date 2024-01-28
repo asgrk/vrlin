@@ -1,4 +1,6 @@
 erm I just made it for myself n later decided to put it here. Feel free to ask for help if it's not working for you
+you have to download vrlin.exe AND "openvr_api.dll" and make sure they're in the same folder
+setting up the vrlin in fl studio: https://www.youtube.com/watch?v=D1H2mFHmTJM
 
 Discord: asgrk
 
