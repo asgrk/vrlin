@@ -13,11 +13,25 @@
 
 #include <string>
 
+#include <chrono>
+#include <thread>
+
 #define lowByte(w) ((uint8_t)((w) & 0xff))
 #define highByte(w) ((uint8_t)((w) >> 8))
 
+// sends a midi message at a good rate.
+using namespace std::chrono_literals;
+
+#define SEND_MIDI() { \
+    std::this_thread::sleep_until(next_midi_message_time); \
+    next_midi_message_time = std::chrono::steady_clock::now() + 1000us; \
+    midiout->sendMessage(&message); \
+}
+
 int main(int argc, char *argv[])
 {
+    auto next_midi_message_time = std::chrono::steady_clock::now();
+
     float offset[3] = {0.0, 0.7, 0.0};
     // um strtof and atof don't like let you know if they didn't enter a number, they just return 0.0 in that case, so we're just
     // not going to check if the numbers are valid er whatever. We just call strtof on 3 arguments if there's 3
@@ -90,14 +104,14 @@ int main(int argc, char *argv[])
     // Program change: 192, 5
     message.push_back(192);
     message.push_back(5);
-    midiout->sendMessage(&message);
+    SEND_MIDI();
 
     // Control Change: 176, 7, 100 (volume)
     message[0] = 176;
     // change on control 7
     message[1] = 7;
     message.push_back(100);
-    midiout->sendMessage(&message);
+    SEND_MIDI();
 
     // error handling
     if (eError != vr::VRInitError_None)
@@ -195,7 +209,7 @@ int main(int argc, char *argv[])
 
                     // yea idk we're just gonna have to experiment with these numbers
                     //.44 AND  -1.62 works for me as an offset. Maybe make it so you can start the program with offset values x y z
-                    float left_xz_plane_size = 0.333;
+                    float left_xz_plane_size = 0.2;
                     left_hand_x_pos = ((left_controller_matrix.m[0][3] + offset[0]) / left_xz_plane_size + 1.0) / 2.0;
                     left_hand_z_pos = ((left_controller_matrix.m[2][3] + offset[2]) / left_xz_plane_size + 1.0) / 2.0;
 
@@ -206,13 +220,13 @@ int main(int argc, char *argv[])
                     // change on control 17 (general purpose controller 1 https://www.cs.cmu.edu/~music/cmsip/readings/davids-midi-spec.htm)
                     message[1] = 17;
                     message[2] = std::min(std::max((int)(left_hand_x_pos * 127), 0), 127);
-                    midiout->sendMessage(&message);
+                    SEND_MIDI();
                     // Control change on channel 0: 176
                     message[0] = 176;
                     // change on control 18 (general purpose controller 1 https://www.cs.cmu.edu/~music/cmsip/readings/davids-midi-spec.htm)
                     message[1] = 18;
                     message[2] = std::min(std::max((int)(left_hand_z_pos * 127), 0), 127);
-                    midiout->sendMessage(&message);
+                    SEND_MIDI();
 
                     // old CC message
                     // int left_controller_message = (int)(left_hand_vertical_offset * 127 + 63);
@@ -236,7 +250,7 @@ int main(int argc, char *argv[])
                     message[2] = pitch_bend_number / 128;
 
                     // sooo I guess ummm probably lsb and msb both take numbers 0-127 (7 bits) and together they form a 14-bit number 0-16383
-                    midiout->sendMessage(&message);
+                    SEND_MIDI();
                 }
 
                 // if a button is pressed
@@ -260,7 +274,7 @@ int main(int argc, char *argv[])
                                 message[0] = 144;
                                 message[1] = 60;
                                 message[2] = 90;
-                                midiout->sendMessage(&message);
+                                SEND_MIDI();
 
                                 // Checking the height when the right trigger was pressed.
                                 // For playing consonants
@@ -280,7 +294,7 @@ int main(int argc, char *argv[])
                                 message[0] = 145;
                                 message[1] = consonant_note;
                                 message[2] = 90;
-                                midiout->sendMessage(&message);
+                                SEND_MIDI();
 
                                 // set right_trigger_is_down to true
                                 std::cout << "right trigger is down\n";
@@ -303,7 +317,7 @@ int main(int argc, char *argv[])
                             // yer it ignores the last bit sooo yer
                             message[2] = (int)(127 - exp(-speed) * 127);
 
-                            midiout->sendMessage(&message);
+                            SEND_MIDI();
                         }
                         else if (unDevice == left_hand_device_index)
                         { // otherwise if it's from the LEFT controller
@@ -320,7 +334,7 @@ int main(int argc, char *argv[])
                                 // so we're just brining the slider all the way up when the left controller is pressed
                                 message[2] = 127;
 
-                                midiout->sendMessage(&message);
+                                SEND_MIDI();
 
                                 // set right_trigger_is_down to true
                                 std::cout << "left trigger is down\n";
@@ -340,13 +354,13 @@ int main(int argc, char *argv[])
                             message[0] = 128;
                             message[1] = 60;
                             message[2] = 40;
-                            midiout->sendMessage(&message);
+                            SEND_MIDI();
 
                             // Note consonant_note Off on channel 1: 145, consonant_note, 40
                             message[0] = 129;
                             message[1] = consonant_note;
                             message[2] = 40;
-                            midiout->sendMessage(&message);
+                            SEND_MIDI();
 
                             // set right_trigger_is_down to false
                             std::cout << "right trigger is up\n";
@@ -369,7 +383,7 @@ int main(int argc, char *argv[])
                             // bringing the slider all the way down, back to 0
                             message[2] = 0;
 
-                            midiout->sendMessage(&message);
+                            SEND_MIDI();
 
                             // set right_trigger_is_down to false
                             std::cout << "left trigger is up\n";
