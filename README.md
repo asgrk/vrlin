@@ -1,7 +1,7 @@
 ## what is this
 it's a script that:
 1. Takes your right hand controller speed in the x-axis, and left hand height, and sends generic midi slider and pitch bend messages from those movement values respectively to a midi device of your choice.
-2. Sends the middle C on and off messages to channel 1 when pressing any button on the right controller to the selected midi device.
+2. Sends the middle C on and off messages to channel 1 when pressing any button on the right controller to the selected midi device (Plays middle C when you press any button on the right controller).
 
 To run it, you have to download vrlin.exe AND openvr_api.dll and make sure they're in the same folder.
 It's midi output so you send it to a midi device like a synth, and that device playes the notes. If you want to send it as input to fl studio for example, you'd need a loopback midi device like [LoopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html).
