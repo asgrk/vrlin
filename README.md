@@ -14,10 +14,10 @@ video for setting up the vrlin in fl studio: https://www.youtube.com/watch?v=D1H
 
 It doesn't override input so like if you're in the steam vr home you can still accidentally press stuff while you're using the vrlin. For me I just disabled steamvr home.
 
-If you're using it with a loopback midi in fl studio, make sure "Send master sync" is disabled. I mean it should be by default, but make sure because Fl studio really doesn't like that. The VRlin doesn't have any transport control. See the "MIDI Output > Send master sync" section [here](https://www.image-line.com/fl-studio-learning/fl-studio-online-manual/html/envsettings_midi.htm), it causes unpredictable behavior or something :(
+If you're using it with a loopback midi in fl studio, make sure "Send master sync" is disabled. I mean it should be by default, but make sure because Fl studio really doesn't like that. The VRlin doesn't have any transport control. See the "MIDI Output > Send master sync" section [here](https://www.image-line.com/fl-studio-learning/fl-studio-online-manual/html/envsettings_midi.htm), it causes unpredictable behavior or something :(, especially for a loopback I'm pretty sure it starts a feedback loop.
 ## roughly how to set it up in fl studio
 
-install [loopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html), which again just takes whatever midi output it's given and sends it as input, choose to send the vr midi output to this loopback midi, and in a program like fl studio, enable the loopback midi device's input ONLY (not output. That'll cause feedback).
+install [loopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html), which again just takes whatever midi output it's given and sends it as input, choose to send the vr midi output to this loopback midi, and in a program like fl studio, enable the loopback midi device's input ONLY (no "Send master sync").
 
 Pressing anything on your right controller plays middle C.<br>
 Releasing what you pressed releases the note
