@@ -31,5 +31,3 @@ The  "finger placement" is the height of the left controller while a button on t
 So if I wanted to link the speed of the right controller to maybe a level knob in the Serum plugin: 
 
 ![Linking "bow" to level knob in fl studio](gifs/how%20to%20link%20vr%20midi.gif)
-
-This is assuming you have the loopMIDI setup mentioned earlier
