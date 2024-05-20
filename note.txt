@@ -1,6 +1,6 @@
 erm the order matters I guess.
 
-This work: g++ -D__WINDOWS_MM__ '.\VRLin extra cc.cpp' .\RtMidi.cpp -L. -lopenvr_api -lwinmm -pthread
+This works: g++ -D__WINDOWS_MM__ '.\VRLin extra cc.cpp' .\RtMidi.cpp -L. -lopenvr_api -lwinmm -pthread
 
 This doesn't: g++ -D__WINDOWS_MM__ '.\VRLin extra cc.cpp' -L. -lopenvr_api -lwinmm .\RtMidi.cpp -pthread
 

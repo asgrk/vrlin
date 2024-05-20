@@ -22,17 +22,19 @@
 // sends a midi message at a good rate.
 using namespace std::chrono_literals;
 
-#define SEND_MIDI() { \
-    std::this_thread::sleep_until(next_midi_message_time); \
-    next_midi_message_time = std::chrono::steady_clock::now() + 1000us; \
-    midiout->sendMessage(&message); \
-}
+#define SEND_MIDI()                                                         \
+    {                                                                       \
+        std::this_thread::sleep_until(next_midi_message_time);              \
+        next_midi_message_time = std::chrono::steady_clock::now() + 1000us; \
+        midiout->sendMessage(&message);                                     \
+    }
 
 int main(int argc, char *argv[])
 {
     auto next_midi_message_time = std::chrono::steady_clock::now();
 
-    float offset[3] = {0.0, 0.7, 0.0};
+    float offset[3] = {0.0, 0.8, 0.0};
+    bool offset_is_set = false;
     // um strtof and atof don't like let you know if they didn't enter a number, they just return 0.0 in that case, so we're just
     // not going to check if the numbers are valid er whatever. We just call strtof on 3 arguments if there's 3
     // if the arg count isn't 3, we just don't set the x, y, z offsets, keeping them to the default
@@ -42,6 +44,7 @@ int main(int argc, char *argv[])
         {
             offset[i] = atof(argv[i + 1]);
         }
+        offset_is_set = true;
     }
 
     // um I think just dont use the header file outside the .lib just like... delete it or
@@ -159,6 +162,32 @@ int main(int argc, char *argv[])
     std::cout << "Left hand index: " << left_hand_device_index << "\n"
               << "Right hand index: " << right_hand_device_index << std::endl;
 
+    if (!offset_is_set)
+    {
+        std::cout << "Erm an offset wasn't given. Choose the center of your vrlin space by positioning the left controller where you want it, and pressing any button on the right controller.\n";
+    }
+    while (!offset_is_set)
+    {
+        for (vr::TrackedDeviceIndex_t unDevice = 0; unDevice <= biggest_connected_device_index; unDevice++)
+        {
+            if (vrSystem->GetControllerStateWithPose(vr::TrackingUniverseRawAndUncalibrated, unDevice, &controllerState, sizeof(controllerState), &controllerPose))
+            {
+                if (unDevice == left_hand_device_index && right_trigger_is_down)
+                {
+                    offset[0] = -controllerPose.mDeviceToAbsoluteTracking.m[0][3];
+                    offset[1] = -controllerPose.mDeviceToAbsoluteTracking.m[1][3];
+                    offset[2] = -controllerPose.mDeviceToAbsoluteTracking.m[2][3];
+                    offset_is_set = true;
+                    std::cout << "xyz center is set to:\n" << offset[0] << " " << offset[1] << " " << offset[2] << "\nIf you want to keep using this same offset, write those values down somewhere and run this with those 3 numbers as arguments";
+                }
+                if (unDevice == right_hand_device_index && controllerState.ulButtonPressed)
+                {
+                    right_trigger_is_down = true;
+                }
+            }
+        }
+    }
+
     while (true)
     {
 
@@ -183,11 +212,11 @@ int main(int argc, char *argv[])
                 {
                     vr::HmdMatrix34_t left_controller_matrix = controllerPose.mDeviceToAbsoluteTracking;
 
-                    // printing the position of the left controller. To see a good position to set the offset to.
                     if (left_trigger_is_down && right_trigger_is_down)
                     {
 
-                        std::cout << "Left controller position: x: " << left_controller_matrix.m[0][3] << ",    y: " << left_controller_matrix.m[1][3] << ",    z: " << left_controller_matrix.m[2][3] << "\n";
+                        // printing the position of the left controller. To see a good position to set the offset to.
+                        // std::cout << "Left controller position: x: " << left_controller_matrix.m[0][3] << ",    y: " << left_controller_matrix.m[1][3] << ",    z: " << left_controller_matrix.m[2][3] << "\n";
                     }
                     //  Erm pitch bend code: 224 0xe0 or the code for a pitch bend on channel 0
                     //  message[0] = 224;
