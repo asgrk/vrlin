@@ -1,5 +1,5 @@
 ## what is this
-it's a script that sends midi messages based on some VR movement. Speech2.exe is the most updated one. You need Speech2.exe and openvr_api.dll in the same directory to run it.
+it's a script that sends midi messages based on some VR movement. Speech2.exe is the most updated one. You need Speech2.exe and openvr_api.dll in the same directory to run it, and SteamVR has to be already running.
 Position data is relative to an offset you can set via either running it with 3 arguments (x y z offsets) or, if you start it without any arguments, it'll have you position your left hand where you want 0,0,0 to be and then press any button on your right controller. It'll print out those offset values so you can run the program with those same values later.
 
 The speed of your right hand in the x-axis is sent through ctrl 16, a generic MIDI slider. If you link that to the volume knob of a synth, it kind of plays like a bow on a violin. Left hand height controls pitch bend, so maybe more like a cello :)
@@ -19,8 +19,6 @@ It's midi output so you send it to a midi device like a synth, and that device p
 Feel free to ask for help setting it up, or if it's not working for you. Discord: asgrk
 
 ## some other details
-SteamVR has to already be running before you run this.
-
 It doesn't override input so like if you're in the steam vr home you can still accidentally press stuff while you're using the vrlin. For me I just disabled steamvr home.
 
 If you're using it with a loopback midi for fl studio, make sure "Send master sync" is disabled. I mean it should be by default, but make sure because Fl studio really doesn't like that. The VRlin doesn't have any transport control. See the "MIDI Output > Send master sync" section [here](https://www.image-line.com/fl-studio-learning/fl-studio-online-manual/html/envsettings_midi.htm), it causes unpredictable behavior or something :(, especially for a loopback I'm pretty sure it starts a feedback loop.
