@@ -1,5 +1,7 @@
 erm the order matters I guess.
 
-This work: g++ -D__WINDOWS_MM__ '.\VRLin extra cc.cpp' .\RtMidi.cpp -L. -lopenvr_api -lwinmm -pthread
+This works: g++ -D__WINDOWS_MM__ '.\VRLin extra cc.cpp' .\RtMidi.cpp -L. -lopenvr_api -lwinmm -pthread
 
 This doesn't: g++ -D__WINDOWS_MM__ '.\VRLin extra cc.cpp' -L. -lopenvr_api -lwinmm .\RtMidi.cpp -pthread
+
+also 0.7 is good for the height offset so x, 0.7, z for the arguments in the program. I think I'll make 0.0, 0.7, 0.0 be the default (if arguments not specified)
