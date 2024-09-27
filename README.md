@@ -19,6 +19,7 @@ It's midi output so you send it to a midi device like a synth, and that device p
 Feel free to ask for help setting it up, or if it's not working for you. Discord: asgrk
 
 ## some other details
+SteamVR has to already be running before you run this.
 
 It doesn't override input so like if you're in the steam vr home you can still accidentally press stuff while you're using the vrlin. For me I just disabled steamvr home.
 
