@@ -24,7 +24,7 @@ using namespace std::chrono_literals;
 
 #define SEND_MIDI()                                                         \
     {                                                                       \
-        std::this_thread::sleep_until(next_midi_message_time);              \
+        while(std::chrono::steady_clock::now()<next_midi_message_time);              \
         next_midi_message_time = std::chrono::steady_clock::now() + 1000us; \
         midiout->sendMessage(&message);                                     \
     }
