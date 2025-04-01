@@ -1,3 +1,7 @@
+// Uhhh David's MIDI SPEC link is broken, but the wayback machine has it so:
+// https://web.archive.org/web/20240614123925/https://www.cs.cmu.edu/~music/cmsip/readings/davids-midi-spec.htm
+
+
 // um I guess windows defined a min and max but then c++ did and now you have to like undefine it if you want to use <windows.h>
 #define NOMINMAX
 
@@ -10,6 +14,8 @@
 #include <windows.h>
 #include "openvr.h"
 #include <math.h>
+
+#define PI 3.14159265358979323846
 
 #include <string>
 
@@ -24,7 +30,8 @@ using namespace std::chrono_literals;
 
 #define SEND_MIDI()                                                         \
     {                                                                       \
-        while(std::chrono::steady_clock::now()<next_midi_message_time);              \
+        while (std::chrono::steady_clock::now() < next_midi_message_time)   \
+            ;                                                               \
         next_midi_message_time = std::chrono::steady_clock::now() + 1000us; \
         midiout->sendMessage(&message);                                     \
     }
@@ -179,7 +186,8 @@ int main(int argc, char *argv[])
                     offset[1] = -controllerPose.mDeviceToAbsoluteTracking.m[1][3];
                     offset[2] = -controllerPose.mDeviceToAbsoluteTracking.m[2][3];
                     offset_is_set = true;
-                    std::cout << "xyz center is set to:\n" << offset[0] << " " << offset[1] << " " << offset[2] << "\nIf you want to keep using this same offset, write those values down somewhere and run this with those 3 numbers as arguments";
+                    std::cout << "xyz center is set to:\n"
+                              << offset[0] << " " << offset[1] << " " << offset[2] << "\nIf you want to keep using this same offset, write those values down somewhere and run this with those 3 numbers as arguments";
                 }
                 if (unDevice == right_hand_device_index && controllerState.ulButtonPressed)
                 {
@@ -207,7 +215,11 @@ int main(int argc, char *argv[])
             if (vrSystem->GetControllerStateWithPose(vr::TrackingUniverseRawAndUncalibrated, unDevice, &controllerState, sizeof(controllerState), &controllerPose))
             {
                 // Before checking if a button is pressed, reguardless we update the sliders. So people can see what position the pitch bend n whaever is in before they play something
-
+                
+                // Declaring this here ummm because it's set and used inside different if branches because um I didn't really think about
+                // how to organize this that much :(
+                vr::HmdMatrix34_t right_controller_matrix;
+                
                 // getting left hand position n doing stuff w that. Updating pitch bend and generic controllers that correspond
                 if (unDevice == left_hand_device_index)
                 {
@@ -282,6 +294,36 @@ int main(int argc, char *argv[])
                     // sooo I guess ummm probably lsb and msb both take numbers 0-127 (7 bits) and together they form a 14-bit number 0-16383
                     SEND_MIDI();
                 }
+                else if (unDevice == right_hand_device_index)
+                {
+                    // getting right controller matrix. For the bow pressure and octave
+                    right_controller_matrix = controllerPose.mDeviceToAbsoluteTracking;
+                    // std::string bob;
+                    // for(int m = 0; m < 3; m++){
+                    //     for(int n = 0; n<4; n++){
+                    //         bob += std::to_string(right_controller_matrix.m[m][n]) + "\t";
+                    //     }
+                    //     bob += "\n";
+                    // }
+                    // bob += std::to_string(std::atan2(right_controller_matrix.m[2][1],right_controller_matrix.m[2][2])) + "\t";
+                    // bob += std::to_string(std::atan2(right_controller_matrix.m[1][0],right_controller_matrix.m[0][0])) + "\t";
+                    // bob += std::to_string(std::atan2(-right_controller_matrix.m[2][0],std::sqrt(std::pow(right_controller_matrix.m[2][1],2)+std::pow(right_controller_matrix.m[2][2],2)))) + "\t";
+                    // bob += "\t\t" + std::to_string(right_controller_matrix.m[0][3]) + "\t"+ std::to_string(right_controller_matrix.m[1][3]) + "\t"+ std::to_string(right_controller_matrix.m[2][3]);
+                    // bob += "\n\n\n\n\n\n";
+                    // std::cout << bob;
+
+                    float bow_angle = std::atan2(right_controller_matrix.m[1][0],right_controller_matrix.m[0][0]);
+                    
+                    bow_angle = (bow_angle-PI/2)/(-PI);
+                    // std::cout << bow_angle << "\n";
+
+                    // Control change on channel 0: 176
+                    message[0] = 176;
+                    // change on control 18 (general purpose controller 5 https://www.cs.cmu.edu/~music/cmsip/readings/davids-midi-spec.htm)
+                    message[1] = 80;
+                    message[2] = std::min(std::max((int)(bow_angle * 127), 0), 127);
+                    SEND_MIDI();
+                }
 
                 // if a button is pressed
                 if (controllerState.ulButtonPressed)
@@ -300,12 +342,11 @@ int main(int argc, char *argv[])
                                 // it's the interval between notes played by the right hand in meters.
                                 float note_interval = .3;
 
-                                vr::HmdMatrix34_t right_controller_matrix = controllerPose.mDeviceToAbsoluteTracking;
                                 float right_hand_y_pos = right_controller_matrix.m[1][3] + offset[1];
 
-                                base_note = 60 + (int)std::floor((right_hand_y_pos / note_interval)+.5)*12;
+                                base_note = 60 + (int)std::floor((right_hand_y_pos / note_interval) + .5) * 12;
 
-                                // Note 60 On on channel 0 at volume 90/255: 144, 64, 90 
+                                // Note 60 On on channel 0 at volume 90/255: 144, 64, 90
                                 // 144 in hex is 90. Look at message formats: https://www.cs.cmu.edu/~music/cmsip/readings/davids-midi-spec.htm
                                 // 60 is middle c
                                 // idk why I made the volume 90, it was arbitrary

@@ -88,7 +88,8 @@
         "string_view": "cpp",
         "numbers": "cpp",
         "semaphore": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "complex": "cpp"
     },
     "cmake.configureOnOpen": false,
     "C_Cpp.default.compilerPath": "C:\\msys64\\ucrt64\\bin\\g++.exe"
