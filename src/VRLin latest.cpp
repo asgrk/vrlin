@@ -1,7 +1,6 @@
 // Uhhh David's MIDI SPEC link is broken, but the wayback machine has it so:
 // https://web.archive.org/web/20240614123925/https://www.cs.cmu.edu/~music/cmsip/readings/davids-midi-spec.htm
 
-
 // um I guess windows defined a min and max but then c++ did and now you have to like undefine it if you want to use <windows.h>
 #define NOMINMAX
 
@@ -139,6 +138,9 @@ int main(int argc, char *argv[])
     int consonant_note = 0;
     int base_note = 0;
 
+    // It's the length of the right hand height interval corresponding to each octave in meters.
+    float octave_interval = .3;
+
     // loop of stAte you NEED a LOOP rather than a handler :( otherwise it'll be complicated to mix handlore w loop ;(I:(:(:(:))))
     vr::VRControllerState_t controllerState;
     vr::TrackedDevicePose_t controllerPose;
@@ -215,22 +217,23 @@ int main(int argc, char *argv[])
             if (vrSystem->GetControllerStateWithPose(vr::TrackingUniverseRawAndUncalibrated, unDevice, &controllerState, sizeof(controllerState), &controllerPose))
             {
                 // Before checking if a button is pressed, reguardless we update the sliders. So people can see what position the pitch bend n whaever is in before they play something
-                
+
                 // Declaring this here ummm because it's set and used inside different if branches because um I didn't really think about
                 // how to organize this that much :(
                 vr::HmdMatrix34_t right_controller_matrix;
-                
+                float right_hand_y_pos;
+
                 // getting left hand position n doing stuff w that. Updating pitch bend and generic controllers that correspond
                 if (unDevice == left_hand_device_index)
                 {
                     vr::HmdMatrix34_t left_controller_matrix = controllerPose.mDeviceToAbsoluteTracking;
 
-                    if (left_trigger_is_down && right_trigger_is_down)
-                    {
+                    // if (left_trigger_is_down && right_trigger_is_down)
+                    // {
 
-                        // printing the position of the left controller. To see a good position to set the offset to.
-                        // std::cout << "Left controller position: x: " << left_controller_matrix.m[0][3] << ",    y: " << left_controller_matrix.m[1][3] << ",    z: " << left_controller_matrix.m[2][3] << "\n";
-                    }
+                    // printing the position of the left controller. To see a good position to set the offset to.
+                    // std::cout << "Left controller position: x: " << left_controller_matrix.m[0][3] << ",    y: " << left_controller_matrix.m[1][3] << ",    z: " << left_controller_matrix.m[2][3] << "\n";
+                    // }
                     //  Erm pitch bend code: 224 0xe0 or the code for a pitch bend on channel 0
                     //  message[0] = 224;
 
@@ -298,6 +301,7 @@ int main(int argc, char *argv[])
                 {
                     // getting right controller matrix. For the bow pressure and octave
                     right_controller_matrix = controllerPose.mDeviceToAbsoluteTracking;
+                    right_hand_y_pos = right_controller_matrix.m[1][3] + offset[1];
                     // std::string bob;
                     // for(int m = 0; m < 3; m++){
                     //     for(int n = 0; n<4; n++){
@@ -312,9 +316,9 @@ int main(int argc, char *argv[])
                     // bob += "\n\n\n\n\n\n";
                     // std::cout << bob;
 
-                    float bow_angle = std::atan2(right_controller_matrix.m[1][0],right_controller_matrix.m[0][0]);
-                    
-                    bow_angle = (bow_angle-PI/2)/(-PI);
+                    float bow_angle = std::atan2(right_controller_matrix.m[1][0], right_controller_matrix.m[0][0]);
+
+                    bow_angle = (bow_angle - PI / 2) / (-PI);
                     // std::cout << bow_angle << "\n";
 
                     // Control change on channel 0: 176
@@ -335,16 +339,13 @@ int main(int argc, char *argv[])
                         // if it's from the right controller
                         if (unDevice == right_hand_device_index)
                         {
+                            int prev_base_note = base_note;
+                            base_note = 60 + (int)std::floor((right_hand_y_pos / octave_interval) + .5) * 12;
 
                             // if right_trigger_is_down isn't already set to true
                             if (!right_trigger_is_down)
                             {
-                                // it's the interval between notes played by the right hand in meters.
-                                float note_interval = .3;
-
-                                float right_hand_y_pos = right_controller_matrix.m[1][3] + offset[1];
-
-                                base_note = 60 + (int)std::floor((right_hand_y_pos / note_interval) + .5) * 12;
+                                // Code in here happens once, at the moment a button on the right controller is pressed
 
                                 // Note 60 On on channel 0 at volume 90/255: 144, 64, 90
                                 // 144 in hex is 90. Look at message formats: https://www.cs.cmu.edu/~music/cmsip/readings/davids-midi-spec.htm
@@ -398,6 +399,22 @@ int main(int argc, char *argv[])
                             message[2] = (int)(127 - exp(-speed) * 127);
 
                             SEND_MIDI();
+
+                            // If the base note changed
+                            if (base_note != prev_base_note)
+                            {
+                                //release previous base note
+                                message[0] = 128;
+                                message[1] = prev_base_note;
+                                message[2] = 40;
+                                SEND_MIDI();
+
+                                //press current base note
+                                message[0] = 144;
+                                message[1] = base_note;
+                                message[2] = 90;
+                                SEND_MIDI();
+                            }
                         }
                         else if (unDevice == left_hand_device_index)
                         { // otherwise if it's from the LEFT controller
@@ -425,11 +442,15 @@ int main(int argc, char *argv[])
                 }
                 else
                 { // otherwise, if a button ISN'T being pressed
-                    // if it's the right controller that isn't being pressed and right_trigger_is_down hasn't already been set to false
+                    // if the loop is currently on the state of the right controller (so the right controller isn't being pressed)
+                    // and right_trigger_is_down hasn't already been set to false
                     if (unDevice == right_hand_device_index)
                     {
                         if (right_trigger_is_down)
                         {
+                            // This code happens once at the moment the right hand controller button is no longer down
+                            right_trigger_is_down = false;
+
                             //  Note Off: 128, 64, 40
                             message[0] = 128;
                             message[1] = base_note;
@@ -444,7 +465,6 @@ int main(int argc, char *argv[])
 
                             // set right_trigger_is_down to false
                             std::cout << "right trigger is up\n";
-                            right_trigger_is_down = false;
                         }
                     }
                     // if it's the left controller that isn't being pressed and left_trigger_is_down hasn't already been set to false
