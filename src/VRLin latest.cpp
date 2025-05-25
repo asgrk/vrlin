@@ -27,11 +27,14 @@
 // sends a midi message at a good rate.
 using namespace std::chrono_literals;
 
+/* The normal limit for DIN MIDI is 31.25 kbps (or about 1 midi message per milisecond), but um I'm sending a few midi control changes constantly so
+I'm going to double the normal max rate and hope nothing goes wrong 👍
+*/
 #define SEND_MIDI()                                                         \
     {                                                                       \
         while (std::chrono::steady_clock::now() < next_midi_message_time)   \
             ;                                                               \
-        next_midi_message_time = std::chrono::steady_clock::now() + 1000us; \
+        next_midi_message_time = std::chrono::steady_clock::now() + 500us; \
         midiout->sendMessage(&message);                                     \
     }
 
@@ -137,6 +140,7 @@ int main(int argc, char *argv[])
     float left_hand_z_pos;
     int consonant_note = 0;
     int base_note = 0;
+    int prev_base_note = 0;
 
     // It's the length of the right hand height interval corresponding to each octave in meters.
     float octave_interval = .3;
@@ -339,7 +343,7 @@ int main(int argc, char *argv[])
                         // if it's from the right controller
                         if (unDevice == right_hand_device_index)
                         {
-                            int prev_base_note = base_note;
+                            prev_base_note = base_note;
                             base_note = 60 + (int)std::floor((right_hand_y_pos / octave_interval) + .5) * 12;
 
                             // if right_trigger_is_down isn't already set to true
@@ -348,13 +352,18 @@ int main(int argc, char *argv[])
                                 // Code in here happens once, at the moment a button on the right controller is pressed
 
                                 // Note 60 On on channel 0 at volume 90/255: 144, 64, 90
-                                // 144 in hex is 90. Look at message formats: https://www.cs.cmu.edu/~music/cmsip/readings/davids-midi-spec.htm
+                                // 144 is 90 in decimal. Look at message formats: https://www.cs.cmu.edu/~music/cmsip/readings/davids-midi-spec.htm
                                 // 60 is middle c
                                 // idk why I made the volume 90, it was arbitrary
                                 message[0] = 144;
                                 message[1] = base_note;
                                 message[2] = 90;
                                 SEND_MIDI();
+
+                                // On the first loop when the right hand trigger is down, the previous base note needs to be set to the same as the base note
+                                // Otherwise it'll think that the base note changed and send an off signal with the prev_base_note value for the note
+                                // which is already off. Sometimes that makes it play for some reason.
+                                prev_base_note = base_note;
 
                                 // Errrr no consonant dealio, instead, the height of the left controller will bring the note played up or down an octave
                                 // // Checking the height when the right trigger was pressed.
