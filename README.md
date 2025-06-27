@@ -1,5 +1,5 @@
 ## what is this
-it's a script that sends midi messages based on some VR movement. You need vrlin.exe and openvr_api.dll in the same directory to run it, and SteamVR has to be already running.
+it's a script that sends midi messages based on VR controller movement. You need vrlin.exe and openvr_api.dll in the same directory to run it, and SteamVR has to be already running.
 Position data is relative to an offset you can set by either running it with 3 arguments (x y z offsets) or, if you start it without any arguments, it'll have you position your left hand where you want 0,0,0 to be and then press any button on your right controller. It'll print out those offset values so you can run the program with those same values later.
 
 The speed of your right hand in the x-axis is sent through ctrl 16, a generic MIDI slider. If you link that to the volume knob of a synth, it kind of plays like a bow on a violin. Left hand height controls pitch bend, so maybe more like a cello :)
