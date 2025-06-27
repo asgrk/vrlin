@@ -16,7 +16,7 @@ The left hand x and z positions (relative to the offset) are also sent as midi m
 
 It's midi output so you send it to a midi device like a synth, and that device playes the notes. If you want to send it as input to fl studio for example, you'd need a loopback midi device like [LoopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html).
 
-Feel free to ask for help setting it up, or if it's not working for you. Discord: asgrk
+Feel free to ask for help setting it up, or if it's not working for you. Discord: kargs__
 
 ## some other details
 It doesn't override input so like if you're in the steam vr home you can still accidentally press stuff while you're using the vrlin. For me I just disabled steamvr home.
